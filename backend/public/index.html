@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Blog Search</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+      }
+
+      header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .subtitle {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .search-section {
+        padding: 30px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .search-box {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      #searchInput {
+        flex: 1;
+        padding: 15px 20px;
+        border: 2px solid #ddd;
+        border-radius: 25px;
+        font-size: 16px;
+        outline: none;
+        transition: border-color 0.3s ease;
+      }
+
+      #searchInput:focus {
+        border-color: #4facfe;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-search {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-ask {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .results-section {
+        padding: 30px;
+        min-height: 400px;
+      }
+
+      .results-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      .results-title {
+        font-size: 1.5em;
+        color: #495057;
+        font-weight: 600;
+      }
+
+      .results-count {
+        background: #4facfe;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+      }
+
+      .result-item {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .result-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .result-filename {
+        font-weight: 600;
+        color: #495057;
+        font-size: 1.1em;
+      }
+
+      .result-similarity {
+        background: #28a745;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.8em;
+      }
+
+      .result-content {
+        color: #666;
+        line-height: 1.6;
+      }
+
+      .answer-box {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+
+      .answer-title {
+        font-weight: 600;
+        color: #1976d2;
+        margin-bottom: 10px;
+        font-size: 1.2em;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4facfe;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        background: #ffebee;
+        border: 1px solid #f44336;
+        color: #c62828;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state i {
+        font-size: 3em;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+
+      @media (max-width: 768px) {
+        .search-box {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+        }
+
+        header {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🔍 AI Blog Search</h1>
+        <p class="subtitle">Search and ask questions about your blog content</p>
+      </header>
+
+      <section class="search-section">
+        <div class="search-box">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Ask something about the blog content..."
+            onkeypress="handleKeyPress(event)"
+          />
+          <button class="btn btn-search" onclick="search()">
+            Search Content
+          </button>
+          <button class="btn btn-ask" onclick="askQuestion()">
+            Ask Question
+          </button>
+        </div>
+      </section>
+
+      <section class="results-section">
+        <div id="results"></div>
+      </section>
+    </div>
+
+    <script>
+      const API_BASE = window.location.origin;
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          search();
+        }
+      }
+
+      async function search() {
+        const query = document.getElementById("searchInput").value.trim();
+        if (!query) {
+          showError("Please enter a search query");
+          return;
+        }
+
+        showLoading("Searching through blog content...");
+
+        try {
+          const response = await fetch("/search", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ query }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || `HTTP error! status: ${response.status}`
+            );
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            displaySearchResults(data.results);
+          } else {
+            showError(data.error || "Search failed");
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+          showError(
+            `Search failed: ${error.message}. Make sure the server is running.`
+          );
+        }
+      }
+
+      async function askQuestion() {
+        const question = document.getElementById("searchInput").value.trim();
+        if (!question) {
+          showError("Please enter a question");
+          return;
+        }
+
+        showLoading("Analyzing your question...");
+
+        try {
+          const response = await fetch("/ask", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ question }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+              errorData.error || `HTTP error! status: ${response.status}`
+            );
+          }
+
+          const data = await response.json();
+
+          if (data.success) {
+            displayAnswer(data.answer, data.sources);
+          } else {
+            showError(data.error || "Failed to get answer");
+          }
+        } catch (error) {
+          console.error("Ask error:", error);
+          showError(
+            `Failed to get answer: ${error.message}. Make sure the server is running.`
+          );
+        }
+      }
+
+      function displaySearchResults(results) {
+        const resultsDiv = document.getElementById("results");
+
+        if (!results || results.length === 0) {
+          resultsDiv.innerHTML = `
+                    <div class="empty-state">
+                        <div>🔍</div>
+                        <h3>No results found</h3>
+                        <p>Try a different search term or ask a question instead.</p>
+                    </div>
+                `;
+          return;
+        }
+
+        resultsDiv.innerHTML = `
+                <div class="results-header">
+                    <h2 class="results-title">Search Results</h2>
+                    <span class="results-count">${results.length} results</span>
+                </div>
+            `;
+
+        results.forEach((result, index) => {
+          const resultDiv = document.createElement("div");
+          resultDiv.className = "result-item";
+          resultDiv.innerHTML = `
+                    <div class="result-header">
+                        <span class="result-filename">${
+                          result.filename
+                        } • Result ${index + 1}</span>
+                        ${
+                          result.similarity
+                            ? `<span class="result-similarity">${(
+                                result.similarity * 100
+                              ).toFixed(1)}% match</span>`
+                            : ""
+                        }
+                    </div>
+                    <div class="result-content">
+                        ${result.content}
+                    </div>
+                `;
+          resultsDiv.appendChild(resultDiv);
+        });
+      }
+
+      function displayAnswer(answer, sources) {
+        const resultsDiv = document.getElementById("results");
+
+        resultsDiv.innerHTML = `
+                <div class="answer-box">
+                    <div class="answer-title">💡 Answer</div>
+                    <p>${answer}</p>
+                </div>
+                
+                <div class="results-header">
+                    <h2 class="results-title">Source Materials</h2>
+                    <span class="results-count">${sources.length} sources</span>
+                </div>
+            `;
+
+        sources.forEach((source, index) => {
+          const sourceDiv = document.createElement("div");
+          sourceDiv.className = "result-item";
+          sourceDiv.innerHTML = `
+                    <div class="result-header">
+                        <span class="result-filename">${
+                          source.filename
+                        } • Source ${index + 1}</span>
+                        ${
+                          source.similarity
+                            ? `<span class="result-similarity">${(
+                                source.similarity * 100
+                              ).toFixed(1)}% relevant</span>`
+                            : ""
+                        }
+                    </div>
+                    <div class="result-content">
+                        ${source.content}
+                    </div>
+                `;
+          resultsDiv.appendChild(sourceDiv);
+        });
+      }
+
+      function showLoading(message) {
+        document.getElementById("results").innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+      }
+
+      function showError(message) {
+        document.getElementById("results").innerHTML = `
+                <div class="error">
+                    <p>❌ ${message}</p>
+                </div>
+            `;
+      }
+
+      // Initial empty state
+      document.getElementById("results").innerHTML = `
+            <div class="empty-state">
+                <div>🤖</div>
+                <h3>Welcome to AI Blog Search</h3>
+                <p>Enter a search query or ask a question to get started!</p>
+            </div>
+        `;
+    </script>
+  </body>
+</html>
