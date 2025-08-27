@@ -21,6 +21,13 @@ app.use(express.json());
 // Serve static files from public folder
 app.use(express.static(path.join(__dirname, "../public")));
 
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use("/search", searchRoutes);
 app.use("/ask", askRoutes);
 
